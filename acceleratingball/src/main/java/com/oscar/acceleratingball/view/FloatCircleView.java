@@ -11,6 +11,8 @@ public class FloatCircleView extends View {
     private int mWidth;
     private int mHeight;
 
+    private String mHk;
+
     public FloatCircleView(Context context) {
         super(context);
     }
