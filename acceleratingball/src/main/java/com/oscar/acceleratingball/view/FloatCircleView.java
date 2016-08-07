@@ -1,11 +1,15 @@
 package com.oscar.acceleratingball.view;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.AttributeSet;
 import android.view.View;
+
+import com.oscar.acceleratingball.R;
 
 /**
  * Created by Administrator on 2016/8/7 0007.
@@ -18,6 +22,10 @@ public class FloatCircleView extends View {
     private Paint mTextPaint;//绘制文字的画笔
 
     private String mText = "50%";
+
+    private boolean isDrag;
+
+    private Bitmap mBitmap;
 
     public FloatCircleView(Context context) {
         super(context);
@@ -45,6 +53,9 @@ public class FloatCircleView extends View {
         mTextPaint.setTextSize(25);
         mTextPaint.setFakeBoldText(true);
 
+        Bitmap src = BitmapFactory.decodeResource(getResources(), R.drawable.flower);
+        mBitmap = Bitmap.createScaledBitmap(src, mWidth, mHeight, true);
+
     }
 
     @Override
@@ -58,12 +69,21 @@ public class FloatCircleView extends View {
      */
     @Override
     protected void onDraw(Canvas canvas) {
-        canvas.drawCircle(mWidth / 2, mHeight / 2, mWidth / 2, mCirclePaint);
-        float textWidth = mTextPaint.measureText(mText);
-        float x = mWidth / 2 - textWidth / 2;
-        Paint.FontMetrics fontMetrics = mTextPaint.getFontMetrics();
-        float dy = -(fontMetrics.descent + fontMetrics.ascent) / 2;
-        float y = mHeight / 2 + dy;
-        canvas.drawText(mText, x, y, mTextPaint);
+        if(isDrag) {
+            canvas.drawBitmap(mBitmap, 0, 0, null);
+        } else {
+            canvas.drawCircle(mWidth / 2, mHeight / 2, mWidth / 2, mCirclePaint);
+            float textWidth = mTextPaint.measureText(mText);
+            float x = mWidth / 2 - textWidth / 2;
+            Paint.FontMetrics fontMetrics = mTextPaint.getFontMetrics();
+            float dy = -(fontMetrics.descent + fontMetrics.ascent) / 2;
+            float y = mHeight / 2 + dy;
+            canvas.drawText(mText, x, y, mTextPaint);
+        }
+    }
+
+    public void setDragState(boolean b) {
+        isDrag = b;
+        invalidate();
     }
 }

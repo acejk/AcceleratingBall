@@ -3,6 +3,8 @@ package com.oscar.acceleratingball.engine;
 import android.content.Context;
 import android.graphics.PixelFormat;
 import android.view.Gravity;
+import android.view.MotionEvent;
+import android.view.View;
 import android.view.WindowManager;
 
 import com.oscar.acceleratingball.view.FloatCircleView;
@@ -19,11 +21,59 @@ public class FloatViewManager {
 
     private FloatCircleView mFloatCirCleView;
 
+    private WindowManager.LayoutParams mParams;
+
+    private float mStartX;
+    private float mStartY;
+
     private FloatViewManager(Context context){
         this.mContext = context;
         mWindomManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
         mFloatCirCleView = new FloatCircleView(context);
-    };
+
+        mFloatCirCleView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        mStartX = event.getRawX();
+                        mStartY = event.getRawY();
+                        break;
+                    case MotionEvent.ACTION_MOVE:
+                        float x = event.getRawX();
+                        float y = event.getRawY();
+                        float dx = x - mStartX;
+                        float dy = y - mStartY;
+                        mParams.x += dx;
+                        mParams.y += dy;
+                        mFloatCirCleView.setDragState(true);
+                        mWindomManager.updateViewLayout(mFloatCirCleView, mParams);
+                        mStartX = x;
+                        mStartY = y;
+                        break;
+                    case MotionEvent.ACTION_UP:
+                        float x1 = event.getRawX();
+                        if(x1 > getScreenWidth() / 2) {
+                            mParams.x = getScreenWidth() - mFloatCirCleView.mWidth;
+                        } else {
+                            mParams.x = 0;
+                        }
+                        mFloatCirCleView.setDragState(false);
+                        mWindomManager.updateViewLayout(mFloatCirCleView, mParams);
+                        break;
+                }
+
+                return false;
+            }
+        });
+
+        mFloatCirCleView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+            }
+        });
+    }
     public static FloatViewManager getInstance(Context context) {
         if(mInstance == null) {
             synchronized (FloatViewManager.class) {
@@ -36,15 +86,19 @@ public class FloatViewManager {
     }
 
     public void showFloatCircle() {
-        WindowManager.LayoutParams params = new WindowManager.LayoutParams();
-        params.width = mFloatCirCleView.mWidth;
-        params.height = mFloatCirCleView.mHeight;
-        params.gravity = Gravity.TOP | Gravity.LEFT;
-        params.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
-        params.x = 0;
-        params.y = 0;
-        params.type = WindowManager.LayoutParams.TYPE_PHONE;
-        params.format = PixelFormat.RGBA_8888;
-        mWindomManager.addView(mFloatCirCleView, params);
+        mParams = new WindowManager.LayoutParams();
+        mParams.width = mFloatCirCleView.mWidth;
+        mParams.height = mFloatCirCleView.mHeight;
+        mParams.gravity = Gravity.TOP | Gravity.LEFT;
+        mParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
+        mParams.x = 0;
+        mParams.y = 0;
+        mParams.type = WindowManager.LayoutParams.TYPE_PHONE;
+        mParams.format = PixelFormat.RGBA_8888;
+        mWindomManager.addView(mFloatCirCleView, mParams);
+    }
+
+    public int getScreenWidth() {
+        return mWindomManager.getDefaultDisplay().getWidth();
     }
 }
