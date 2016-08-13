@@ -15,7 +15,6 @@ import android.util.AttributeSet;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.Toast;
 
 /**
  * Created by Administrator on 2016/8/13 0013.
@@ -36,8 +35,12 @@ public class ProgressView extends View {
     private int mProgress = 80;
     private int mMax = 100;
     private int mCurrentProgress = 0;
+    private int mCount = 50;
 
     private DoubleRunnble mDoubleRunnble = new DoubleRunnble();
+    private SingleRunnable mSingleRunnble = new SingleRunnable();
+
+    private boolean isSingleTap;
 
     private GestureDetector mDetector;
 
@@ -94,14 +97,33 @@ public class ProgressView extends View {
         public boolean onDoubleTap(MotionEvent e) {
             startDoubleTapAnimation();
 
-            Toast.makeText(getContext(), "双击了", Toast.LENGTH_SHORT).show();
             return super.onDoubleTap(e);
         }
 
         @Override
         public boolean onSingleTapConfirmed(MotionEvent e) {
-            Toast.makeText(getContext(), "单击了", Toast.LENGTH_SHORT).show();
+            isSingleTap = true;
+            mCurrentProgress = mProgress;
+            startSingleTapAnimation();
             return super.onSingleTapConfirmed(e);
+        }
+    }
+
+    private void startSingleTapAnimation() {
+        mHandler.postDelayed(mSingleRunnble, 200);
+    }
+
+    class SingleRunnable implements Runnable {
+        @Override
+        public void run() {
+            mCount--;
+            if(mCount >= 0) {
+                invalidate();
+                mHandler.postDelayed(mSingleRunnble, 200);
+            } else {
+                mHandler.removeCallbacks(mSingleRunnble);
+                mCount = 50;
+            }
         }
     }
 
@@ -137,11 +159,29 @@ public class ProgressView extends View {
         mPath.lineTo(mWidth, mHeight);
         mPath.lineTo(0, mHeight);
         mPath.lineTo(0, y);
-        float d = (1 - ((float)mCurrentProgress / mProgress)) * 10;
-        for(int i=0; i<5; i++) {
-            mPath.rQuadTo(10, -d, 20, 0);
-            mPath.rQuadTo(10, d, 20, 0);
+        if(!isSingleTap) {
+            float d = (1 - ((float)mCurrentProgress / mProgress)) * 10;
+            for(int i=0; i<5; i++) {
+                mPath.rQuadTo(10, -d, 20, 0);
+                mPath.rQuadTo(10, d, 20, 0);
+            }
+        } else {
+            float d = ((float)mCount / 50) * 10;
+            if(mCount % 2 == 0) {
+                for(int i=0; i<5; i++) {
+                    mPath.rQuadTo(20, -d, 40, 0);
+                    mPath.rQuadTo(20, d, 40, 0);
+                }
+            } else {
+                for(int i=0; i<5; i++) {
+                    mPath.rQuadTo(20, d, 40, 0);
+                    mPath.rQuadTo(20, -d, 40, 0);
+
+                }
+            }
         }
+
+
         mPath.close();
         mBitmapCanvas.drawPath(mPath, mProgressPaint);
 
