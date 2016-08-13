@@ -6,6 +6,7 @@ import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.Toast;
 
 import com.oscar.acceleratingball.view.FloatCircleView;
 
@@ -23,8 +24,12 @@ public class FloatViewManager {
 
     private WindowManager.LayoutParams mParams;
 
+    //触摸点
     private float mStartX;
     private float mStartY;
+
+    private float mX0;
+    private float mY0;
 
     private FloatViewManager(Context context){
         this.mContext = context;
@@ -38,10 +43,14 @@ public class FloatViewManager {
                     case MotionEvent.ACTION_DOWN:
                         mStartX = event.getRawX();
                         mStartY = event.getRawY();
+
+                        mX0 = event.getRawX();
+                        mY0 = event.getRawY();
                         break;
                     case MotionEvent.ACTION_MOVE:
                         float x = event.getRawX();
                         float y = event.getRawY();
+
                         float dx = x - mStartX;
                         float dy = y - mStartY;
                         mParams.x += dx;
@@ -60,7 +69,11 @@ public class FloatViewManager {
                         }
                         mFloatCirCleView.setDragState(false);
                         mWindomManager.updateViewLayout(mFloatCirCleView, mParams);
-                        break;
+                        if(Math.abs(x1 - mX0) > 6) {
+                            return true;
+                        } else {
+                            return false;
+                        }
                 }
 
                 return false;
@@ -70,7 +83,7 @@ public class FloatViewManager {
         mFloatCirCleView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                Toast.makeText(mContext, "onClick", Toast.LENGTH_SHORT).show();
             }
         });
     }
