@@ -8,16 +8,21 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
+import android.os.Handler;
+import android.os.Message;
 import android.text.TextPaint;
 import android.util.AttributeSet;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Toast;
 
 /**
  * Created by Administrator on 2016/8/13 0013.
  */
 public class ProgressView extends View {
-    private int mWidth = 100;
-    private int mHeight = 100;
+    private int mWidth = 200;
+    private int mHeight = 200;
 
     private Paint mCiclePaint;
     private Paint mProgressPaint;
@@ -28,8 +33,20 @@ public class ProgressView extends View {
 
     private Path mPath = new Path();
 
-    private int mProgress = 20;
+    private int mProgress = 80;
     private int mMax = 100;
+    private int mCurrentProgress = 0;
+
+    private DoubleRunnble mDoubleRunnble = new DoubleRunnble();
+
+    private GestureDetector mDetector;
+
+    private Handler mHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+
+        }
+    };
 
     public ProgressView(Context context) {
         this(context, null);
@@ -61,26 +78,74 @@ public class ProgressView extends View {
 
         mBitmap = Bitmap.createBitmap(mWidth, mHeight, Bitmap.Config.ARGB_8888);
         mBitmapCanvas = new Canvas(mBitmap);
+
+        mDetector = new GestureDetector(new MyGestureDetectorListener());
+        setOnTouchListener(new OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                return mDetector.onTouchEvent(event);
+            }
+        });
+        setClickable(true);
+    }
+
+    class  MyGestureDetectorListener extends GestureDetector.SimpleOnGestureListener {
+        @Override
+        public boolean onDoubleTap(MotionEvent e) {
+            startDoubleTapAnimation();
+
+            Toast.makeText(getContext(), "双击了", Toast.LENGTH_SHORT).show();
+            return super.onDoubleTap(e);
+        }
+
+        @Override
+        public boolean onSingleTapConfirmed(MotionEvent e) {
+            Toast.makeText(getContext(), "单击了", Toast.LENGTH_SHORT).show();
+            return super.onSingleTapConfirmed(e);
+        }
+    }
+
+    /**
+     * 双击动画
+     */
+    private void startDoubleTapAnimation() {
+        mHandler.postDelayed(mDoubleRunnble, 50);
+
+    }
+
+    class DoubleRunnble implements Runnable {
+
+        @Override
+        public void run() {
+            mCurrentProgress++;
+            if(mCurrentProgress <= mProgress) {
+                invalidate();//重画
+                mHandler.postDelayed(mDoubleRunnble, 50);
+            } else {
+                mHandler.removeCallbacks(mDoubleRunnble);
+                mCurrentProgress = 0;
+            }
+        }
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         mBitmapCanvas.drawCircle(mWidth / 2, mHeight / 2, mWidth / 2, mCiclePaint);
         mPath.reset();
-        float y = (1 - (float)mProgress / mMax) * mHeight;
+        float y = (1 - (float)mCurrentProgress / mMax) * mHeight;
         mPath.moveTo(mWidth, y);
         mPath.lineTo(mWidth, mHeight);
         mPath.lineTo(0, mHeight);
         mPath.lineTo(0, y);
-
-        for(int i=0; i<3; i++) {
-            mPath.rQuadTo(10, -10, 20, 0);
-            mPath.rQuadTo(10, 10, 20, 0);
+        float d = (1 - ((float)mCurrentProgress / mProgress)) * 10;
+        for(int i=0; i<5; i++) {
+            mPath.rQuadTo(10, -d, 20, 0);
+            mPath.rQuadTo(10, d, 20, 0);
         }
         mPath.close();
         mBitmapCanvas.drawPath(mPath, mProgressPaint);
 
-        String text = (int) (((float)mProgress / mMax) * 100) + "%";
+        String text = (int) (((float)mCurrentProgress / mMax) * 100) + "%";
         float textWidth = mTextPaint.measureText(text);
         Paint.FontMetrics metrics = mTextPaint.getFontMetrics();
         float baseLine = mHeight / 2 - (metrics.ascent + metrics.descent) / 2;
