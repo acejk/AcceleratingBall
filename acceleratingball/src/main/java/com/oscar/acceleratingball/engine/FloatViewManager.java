@@ -6,9 +6,11 @@ import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.Toast;
 
 import com.oscar.acceleratingball.view.FloatCircleView;
+import com.oscar.acceleratingball.view.FloatMenuView;
+
+import java.lang.reflect.Field;
 
 /**
  * Created by Administrator on 2016/8/7 0007.
@@ -30,6 +32,8 @@ public class FloatViewManager {
 
     private float mX0;
     private float mY0;
+
+    private FloatMenuView mFloatMenuView;
 
     private FloatViewManager(Context context){
         this.mContext = context;
@@ -83,10 +87,27 @@ public class FloatViewManager {
         mFloatCirCleView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(mContext, "onClick", Toast.LENGTH_SHORT).show();
+                mWindomManager.removeView(mFloatCirCleView);
+                showFloatMenuView();
+                mFloatMenuView.startAnimation();
             }
         });
+        mFloatMenuView = new FloatMenuView(mContext);
     }
+
+    private void showFloatMenuView() {
+        WindowManager.LayoutParams Params = new WindowManager.LayoutParams();
+        Params.width = getScreenWidth();
+        Params.height = getScreenHeight() - getStatusHeight();
+        Params.gravity = Gravity.BOTTOM | Gravity.LEFT;
+        Params.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
+        Params.x = 0;
+        Params.y = 0;
+        Params.type = WindowManager.LayoutParams.TYPE_PHONE;
+        Params.format = PixelFormat.RGBA_8888;
+        mWindomManager.addView(mFloatMenuView, Params);
+    }
+
     public static FloatViewManager getInstance(Context context) {
         if(mInstance == null) {
             synchronized (FloatViewManager.class) {
@@ -99,19 +120,42 @@ public class FloatViewManager {
     }
 
     public void showFloatCircle() {
-        mParams = new WindowManager.LayoutParams();
-        mParams.width = mFloatCirCleView.mWidth;
-        mParams.height = mFloatCirCleView.mHeight;
-        mParams.gravity = Gravity.TOP | Gravity.LEFT;
-        mParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
-        mParams.x = 0;
-        mParams.y = 0;
-        mParams.type = WindowManager.LayoutParams.TYPE_PHONE;
-        mParams.format = PixelFormat.RGBA_8888;
+        if(mParams == null) {
+            mParams = new WindowManager.LayoutParams();
+            mParams.width = mFloatCirCleView.mWidth;
+            mParams.height = mFloatCirCleView.mHeight;
+            mParams.gravity = Gravity.TOP | Gravity.LEFT;
+            mParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
+            mParams.x = 0;
+            mParams.y = 0;
+            mParams.type = WindowManager.LayoutParams.TYPE_PHONE;
+            mParams.format = PixelFormat.RGBA_8888;
+        }
         mWindomManager.addView(mFloatCirCleView, mParams);
     }
 
     public int getScreenWidth() {
         return mWindomManager.getDefaultDisplay().getWidth();
+    }
+
+    public int getScreenHeight() {
+        return mWindomManager.getDefaultDisplay().getHeight();
+    }
+
+    public int getStatusHeight() {
+        try {
+            Class<?> c =  Class.forName("com.android.internal.R$dimen");
+            Object o = c.newInstance();
+            Field filed = c.getField("status_bar_height");
+            int x = (int) filed.get(o);
+            return mContext.getResources().getDimensionPixelSize(x);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 0;
+        }
+    }
+
+    public void hideFloatMenuView() {
+        mWindomManager.removeView(mFloatMenuView);
     }
 }

@@ -37,6 +37,7 @@ public class ProgressView extends View {
     private int mCurrentProgress = 0;
     private int mCount = 50;
 
+
     private DoubleRunnble mDoubleRunnble = new DoubleRunnble();
     private SingleRunnable mSingleRunnble = new SingleRunnable();
 
@@ -64,6 +65,11 @@ public class ProgressView extends View {
         initPaint();
     }
 
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        setMeasuredDimension(mWidth, mHeight);
+    }
+
     private void initPaint() {
         mCiclePaint = new Paint();
         mCiclePaint.setAntiAlias(true);
@@ -75,7 +81,7 @@ public class ProgressView extends View {
         mProgressPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
 
         mTextPaint = new TextPaint();
-        mTextPaint.setAntiAlias(true);;
+        mTextPaint.setAntiAlias(true);
         mTextPaint.setColor(Color.WHITE);
         mTextPaint.setTextSize(25);
 
